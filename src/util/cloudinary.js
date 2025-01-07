@@ -27,4 +27,14 @@ cloudinary.config({
     }
   }
 
-  export {uploadOnCloudinary};
+  const deleteOnCloudinary = async (publicID)=>{
+    try {
+        const result = await cloudinary.uploader.destroy(publicID);
+        console.log('deleted from cloudinary',publicID);
+    } catch (error) {
+        console.log('error deleting from cloudinary',error)
+        return null
+    }
+  }
+
+  export {uploadOnCloudinary,deleteOnCloudinary};

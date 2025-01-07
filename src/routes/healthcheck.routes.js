@@ -4,4 +4,4 @@ import healthCheck from '../controllers/healthcheck.controllers.js';
 const router = Router();
 router.get('/',healthCheck);
 
-export {router}
+export default router
