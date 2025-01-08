@@ -16,4 +16,4 @@ router.post('/',
     }
 ]),
 registerUser);
-export default router;
+export {router};
