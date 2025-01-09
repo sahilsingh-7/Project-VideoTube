@@ -1,5 +1,5 @@
 import {Router} from 'express'
-import registerUser from '../controllers/registration.controllers.js';
+import {registerUser} from '../controllers/registration.controllers.js';
 import {upload} from '../middleware/multer.middlewares.js';
 
 
