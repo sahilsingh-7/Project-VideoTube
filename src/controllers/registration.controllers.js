@@ -4,7 +4,8 @@ import {ApiError} from '../util/ApiError.js';
 import {uploadOnCloudinary,deleteOnCloudinary} from '../util/cloudinary.js'
 import {upload} from '../middleware/multer.middlewares.js'
 import {User} from '../models/user.model.js';
-import mongoose from 'mongoose'
+import jwt from 'jsonwebtoken'
+
 
 const generateAccessAndRefreshToken = async(userID)=>{
     try {
@@ -125,6 +126,44 @@ const loginUser = asyncHandler(async(req,res)=>{
            .json(new ApiResponse(200,{user: loggedInUser,accessToken,refreshToken},'user logged in successfully'));
 
 })
+
+const refreshAccessToken = asyncHandler(async(req,res)=>{
+    const incomingRefreshToken = req.cookies.refreshToken || res.body.refreshToken /*this part is helpfull to extract refresh token from mobile*/;
+    if(!incomingRefreshToken) throw new ApiError(400,'Incoming Refresh Token not found');
+
+try {
+    const decodeToken = await jwt.verify(incomingRefreshToken,process.env.REFRESHTOKEN_SECRET);
+
+    if(!decodeToken) throw new ApiError(400,'decoding failed');
+
+    const user = await User.findById(decodeToken?._id);
+    if(!user) throw new ApiError(400,'invalid refresh token');
+    
+    if(incomingRefreshToken !== user?.refreshToken) throw new ApiError(400,'invalid refresh token or refresh token might be expired');
+
+    const {accessToken,refreshToken:newRefreshToken} = await generateAccessAndRefreshToken(user?._id);
+
+    user.refreshToken = newRefreshToken;
+    await user.save({validateBeforeSave:false});
+
+    const option = {
+        httpOnly:true,
+        secure:process.env.NODE_ENV==='production'
+        // sameSite: 'Strict', // Prevents cross-site requests
+
+    }
+    return res.status(200)
+              .cookie('accessToken',accessToken,option)
+              .cookie('refreshToken',newRefreshToken,option)
+              .json(new ApiResponse(200,{accessToken,refreshToken:newRefreshToken},'Access Token refreshed Successfully') )
+    
+
+} catch (error) {
+    throw new ApiError(500,'something went wrong while refreshing access token ');
+}
+
+})
+
 export {
-    registerUser,loginUser
+    registerUser,loginUser,refreshAccessToken
 } ;
