@@ -73,7 +73,7 @@ const registerUser = asyncHandler(async (req,res)=>{
                 email,
                 password
             })
-            console.log(typeof user);
+
             
         } catch (error) {
             console.log('user creation is failed',error);
@@ -111,6 +111,9 @@ const loginUser = asyncHandler(async(req,res)=>{
 
 
     const {accessToken,refreshToken} = await generateAccessAndRefreshToken(user._id);
+
+    user.refreshToken = refreshToken;
+    await user.save({validateBeforeSave:false});
 
     const loggedInUser = await User.findById(user._id).select('-password -refreshToken');
 
